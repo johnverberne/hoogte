@@ -24,7 +24,21 @@ export function starterPatterns() {
       waveHeightMm: 10,
       wavelengthScale: 0.85,
     },
+    {
+      id: "starter-limburg",
+      ...cloneParams(defaultParams()),
+      name: "Zuid-Limburg",
+      mode: "map",
+      mapRegion: "limburg",
+      waveHeightMm: 12,
+      falloff: 0.08,
+      resolution: 140,
+    },
   ];
+}
+
+export async function fetchMap(id) {
+  return request(`/api/maps/${id}`);
 }
 
 async function request(path, options) {

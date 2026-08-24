@@ -15,7 +15,17 @@ const multiRadial = clampParams({
 });
 checkStl(buildPrintableStl(multiRadial), meshStats(multiRadial), "radial-4");
 
-function checkStl(stl, stats, mode) {
+const mapParams = clampParams({
+  ...defaultParams(),
+  mode: "map",
+  mapRoads: true,
+  mapContours: true,
+});
+const mapStl = buildPrintableStl(mapParams);
+const mapStats = meshStats(mapParams);
+checkStl(mapStl, mapStats, "map", { skipHeight: true });
+
+function checkStl(stl, stats, mode, options = {}) {
   const triangles = stl.readUInt32LE(80);
   const expectedBytes = 84 + triangles * 50;
 
@@ -40,7 +50,7 @@ function checkStl(stl, stats, mode) {
   if (minZ !== 0) {
     throw new Error(`${mode}: onderkant moet op 0 mm liggen, kreeg ${minZ}`);
   }
-  if (Math.abs(maxZ - stats.heightMm) > 0.15) {
+  if (!options.skipHeight && Math.abs(maxZ - stats.heightMm) > 0.15) {
     throw new Error(`${mode}: hoogte ${maxZ} wijkt af van ${stats.heightMm}`);
   }
 

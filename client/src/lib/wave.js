@@ -1,9 +1,11 @@
 import { applyTextRelief, defaultTextParams, textRaisedMm } from "./textField.js";
+import { buildMapField, defaultMapParams, mapRaisedMm } from "./mapField.js";
 
 export const MODES = [
   { id: "interference", label: "Interferentie" },
   { id: "radial", label: "Radiaal" },
   { id: "standing", label: "Staande golf" },
+  { id: "map", label: "Kaart" },
 ];
 
 export function defaultParams() {
@@ -21,6 +23,7 @@ export function defaultParams() {
     mode: "interference",
     twist: 0,
     ...defaultTextParams(),
+    ...defaultMapParams(),
   };
 }
 
@@ -86,6 +89,12 @@ export function sampleHeight(nx, ny, params) {
 }
 
 export function buildHeightField(params) {
+  if (params.mode === "map") {
+    const field = buildMapField(params);
+    applyTextRelief(field, params);
+    return field;
+  }
+
   const n = params.resolution;
   const field = new Float32Array(n * n);
   let min = Infinity;
@@ -121,7 +130,9 @@ export function meshStats(params) {
     fileKb: Math.round(bytes / 1024),
     widthMm: round1(params.sizeMm),
     depthMm: round1(params.sizeMm),
-    heightMm: round1(params.baseThicknessMm + params.waveHeightMm + textRaisedMm(params)),
+    heightMm: round1(
+      params.baseThicknessMm + params.waveHeightMm + textRaisedMm(params) + mapRaisedMm(params)
+    ),
   };
 }
 

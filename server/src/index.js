@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { Pattern } from "./models/Pattern.js";
 import { patternsRouter } from "./routes/patterns.js";
+import { listMaps, loadMap } from "./mapStore.js";
 import { defaultParams } from "./wave.js";
 
 dotenv.config({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../.env") });
@@ -20,6 +21,18 @@ app.use(express.json({ limit: "1mb" }));
 app.get("/api/health", async (_req, res) => {
   const mongo = mongoose.connection.readyState === 1;
   res.json({ ok: true, mongo });
+});
+
+app.get("/api/maps", (_req, res) => {
+  res.json(listMaps());
+});
+
+app.get("/api/maps/:id", async (req, res) => {
+  try {
+    res.json(await loadMap(req.params.id));
+  } catch {
+    res.status(404).json({ error: "Kaart niet gevonden" });
+  }
 });
 
 app.use("/api/patterns", async (req, res, next) => {
@@ -82,6 +95,15 @@ async function seedIfEmpty() {
       harmonicCount: 2,
       waveHeightMm: 10,
       wavelengthScale: 0.85,
+    },
+    {
+      ...defaultParams(),
+      name: "Zuid-Limburg",
+      mode: "map",
+      mapRegion: "limburg",
+      waveHeightMm: 12,
+      falloff: 0.08,
+      resolution: 140,
     },
   ]);
 }

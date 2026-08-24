@@ -73,6 +73,11 @@ function toClient(doc) {
     textOffsetY: doc.textOffsetY ?? 0,
     textRotation: doc.textRotation ?? 0,
     textMode: doc.textMode ?? "raise",
+    mapRegion: doc.mapRegion ?? "limburg",
+    mapRoads: doc.mapRoads !== false,
+    mapContours: doc.mapContours !== false,
+    roadHeightMm: doc.roadHeightMm ?? 0.7,
+    roadWidthMm: doc.roadWidthMm ?? 1.2,
     updatedAt: doc.updatedAt,
   };
 }

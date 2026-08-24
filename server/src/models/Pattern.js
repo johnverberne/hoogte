@@ -32,6 +32,11 @@ const patternSchema = new mongoose.Schema(
     textOffsetY: { type: Number, default: 0 },
     textRotation: { type: Number, default: 0 },
     textMode: { type: String, default: "raise" },
+    mapRegion: { type: String, default: "limburg" },
+    mapRoads: { type: Boolean, default: true },
+    mapContours: { type: Boolean, default: true },
+    roadHeightMm: { type: Number, default: 0.7 },
+    roadWidthMm: { type: Number, default: 1.2 },
   },
   { timestamps: true }
 );

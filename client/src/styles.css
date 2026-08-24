@@ -255,8 +255,35 @@ button.ghost:hover,
   font-weight: 400;
 }
 
-.modes-2 {
+.modes-2,
+.modes-4 {
   grid-template-columns: 1fr 1fr;
+}
+
+.modes-stack {
+  grid-template-columns: 1fr;
+}
+
+.modes-stack button {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  text-align: left;
+}
+
+.modes-stack small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sea);
 }
 
 .modes {

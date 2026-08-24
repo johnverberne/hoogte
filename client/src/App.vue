@@ -4,8 +4,9 @@ import Viewport3D from "./components/Viewport3D.vue";
 import SliderField from "./components/SliderField.vue";
 import { cloneParams, defaultParams, meshStats, MODES } from "./lib/wave.js";
 import { TEXT_MODES } from "./lib/textField.js";
+import { MAP_REGIONS, setActiveMap } from "./lib/mapField.js";
 import { downloadStl } from "./lib/stl.js";
-import { deletePattern, getHealth, listPatterns, savePattern } from "./lib/api.js";
+import { deletePattern, fetchMap, getHealth, listPatterns, savePattern } from "./lib/api.js";
 
 const params = reactive(defaultParams());
 const patterns = ref([]);
@@ -18,8 +19,13 @@ const openHarmonic = ref(0);
 const stats = computed(() => meshStats(params));
 const visibleHarmonics = computed(() => params.harmonics.slice(0, params.harmonicCount));
 const isRadial = computed(() => params.mode === "radial");
+const isMap = computed(() => params.mode === "map");
 const sourceTitle = computed(() => (isRadial.value ? "Radialen" : "Harmonieken"));
 const maxOffset = computed(() => Math.round(params.sizeMm * 0.5));
+const mapLoading = ref(false);
+const mapMeta = ref("");
+const currentRegion = computed(() => MAP_REGIONS.find((region) => region.id === params.mapRegion) || MAP_REGIONS[0]);
+let mapLoadToken = 0;
 
 watch(
   () => params.text,
@@ -27,6 +33,13 @@ watch(
     if (value.trim() && !(previous || "").trim() && params.resolution < 140) {
       params.resolution = 140;
     }
+  }
+);
+
+watch(
+  () => [params.mode, params.mapRegion],
+  ([mode, region], previous) => {
+    if (mode === "map") loadMapRegion(region, previous?.[0] !== "map");
   }
 );
 
@@ -71,7 +84,39 @@ function randomize() {
     h.phase = Math.random() * Math.PI * 2;
     h.offset = index === 0 ? 0 : Math.round(12 + Math.random() * maxOffset.value * 0.7);
   });
+  if (params.mode === "map") {
+    params.mapRegion = MAP_REGIONS[Math.floor(Math.random() * MAP_REGIONS.length)].id;
+    params.waveHeightMm = 8 + Math.random() * 10;
+    params.falloff = Math.random() * 0.2;
+  }
   status.value = "Willekeurig patroon";
+}
+
+async function loadMapRegion(id, setup = false) {
+  const token = ++mapLoadToken;
+  mapLoading.value = true;
+  try {
+    const data = await fetchMap(id);
+    if (token !== mapLoadToken) return;
+    setActiveMap(data);
+    params.mapRegion = data.id;
+    if (setup) {
+      if (params.resolution < 130) params.resolution = 140;
+      if (params.waveHeightMm < 10) params.waveHeightMm = 12;
+      params.falloff = Math.min(params.falloff, 0.1);
+    }
+    params.mapRevision += 1;
+    mapMeta.value = `${Math.round(data.min)}–${Math.round(data.max)} m`;
+    status.value = `${data.name} · ${mapMeta.value}`;
+  } catch (error) {
+    if (token !== mapLoadToken) return;
+    setActiveMap(null);
+    params.mapRevision += 1;
+    mapMeta.value = "";
+    status.value = `Kaart zonder live data. ${error.message}`;
+  } finally {
+    if (token === mapLoadToken) mapLoading.value = false;
+  }
 }
 
 function addRadial() {
@@ -165,7 +210,7 @@ function exportStl() {
           <input v-model="params.name" maxlength="80" />
         </label>
 
-        <div class="modes">
+        <div class="modes modes-4">
           <button
             v-for="mode in MODES"
             :key="mode.id"
@@ -177,7 +222,62 @@ function exportStl() {
           </button>
         </div>
 
-        <section>
+        <section v-if="isMap">
+          <h2>Kaart</h2>
+          <div class="modes modes-stack">
+            <button
+              v-for="region in MAP_REGIONS"
+              :key="region.id"
+              type="button"
+              :class="{ active: params.mapRegion === region.id }"
+              :disabled="mapLoading"
+              @click="params.mapRegion = region.id"
+            >
+              {{ region.name }}
+              <small>{{ region.country }}</small>
+            </button>
+          </div>
+          <p class="hint">
+            {{ mapLoading ? "Hoogtekaart laden…" : currentRegion.blurb }}
+            <template v-if="mapMeta && !mapLoading"> · {{ mapMeta }}</template>
+          </p>
+          <label class="check">
+            <input v-model="params.mapRoads" type="checkbox" />
+            Wegen
+          </label>
+          <label class="check">
+            <input v-model="params.mapContours" type="checkbox" />
+            Hoogtelijnen
+          </label>
+          <SliderField
+            v-model="params.roadHeightMm"
+            label="Lijnhoogte"
+            :min="0"
+            :max="4"
+            :step="0.1"
+            unit="mm"
+            :digits="1"
+          />
+          <SliderField
+            v-model="params.roadWidthMm"
+            label="Lijndikte"
+            :min="0.4"
+            :max="4"
+            :step="0.1"
+            unit="mm"
+            :digits="1"
+          />
+          <SliderField
+            v-model="params.falloff"
+            label="Randdemping"
+            :min="0"
+            :max="1"
+            :step="0.01"
+            :digits="2"
+          />
+        </section>
+
+        <section v-if="!isMap">
           <h2>Golf</h2>
           <SliderField
             v-model="params.harmonicCount"
@@ -232,7 +332,7 @@ function exportStl() {
           />
         </section>
 
-        <section>
+        <section v-if="!isMap">
           <h2>{{ sourceTitle }}</h2>
           <article
             v-for="(harmonic, index) in visibleHarmonics"
@@ -381,7 +481,7 @@ function exportStl() {
           />
           <SliderField
             v-model="params.waveHeightMm"
-            label="Golfhoogte"
+            :label="isMap ? 'Reliëfhoogte' : 'Golfhoogte'"
             :min="0.6"
             :max="32"
             :step="0.1"
@@ -413,7 +513,7 @@ function exportStl() {
             <li v-for="item in patterns" :key="item.id" :class="{ current: item.id === activeId }">
               <button type="button" class="lib-load" @click="applyPattern(item)">
                 <strong>{{ item.name }}</strong>
-                <span>{{ item.mode }} · {{ item.harmonicCount }} {{ item.mode === "radial" ? "R" : "H" }}</span>
+                <span>{{ item.mode === "map" ? item.mapRegion || "kaart" : `${item.mode} · ${item.harmonicCount} ${item.mode === "radial" ? "R" : "H"}` }}</span>
               </button>
               <button type="button" class="lib-del" @click="remove(item.id)">×</button>
             </li>

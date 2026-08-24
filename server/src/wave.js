@@ -1,6 +1,7 @@
 import { applyTextRelief, clampTextParams, defaultTextParams, textRaisedMm } from "../../client/src/lib/textField.js";
+import { buildMapField, clampMapParams, defaultMapParams, mapRaisedMm } from "../../client/src/lib/mapField.js";
 
-export const MODES = ["interference", "radial", "standing"];
+export const MODES = ["interference", "radial", "standing", "map"];
 
 export function defaultParams() {
   return {
@@ -17,6 +18,7 @@ export function defaultParams() {
     mode: "interference",
     twist: 0,
     ...defaultTextParams(),
+    ...defaultMapParams(),
   };
 }
 
@@ -66,6 +68,7 @@ export function clampParams(raw = {}) {
     mode: MODES.includes(raw.mode) ? raw.mode : base.mode,
     twist: clamp(num(raw.twist, base.twist), 0, 180),
     ...clampTextParams(raw, sizeMm),
+    ...clampMapParams(raw),
   };
 }
 
@@ -102,6 +105,12 @@ export function sampleHeight(nx, ny, params) {
 }
 
 export function buildHeightField(params) {
+  if (params.mode === "map") {
+    const field = buildMapField(params);
+    applyTextRelief(field, params);
+    return field;
+  }
+
   const n = params.resolution;
   const field = new Float32Array(n * n);
   let min = Infinity;
@@ -139,7 +148,9 @@ export function meshStats(params) {
     fileKb: Math.round(bytes / 1024),
     widthMm: round1(params.sizeMm),
     depthMm: round1(params.sizeMm),
-    heightMm: round1(params.baseThicknessMm + params.waveHeightMm + textRaisedMm(params)),
+    heightMm: round1(
+      params.baseThicknessMm + params.waveHeightMm + textRaisedMm(params) + mapRaisedMm(params)
+    ),
   };
 }
 
