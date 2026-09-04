@@ -12,6 +12,7 @@
     "start": "node server/src/index.js",
     "test": "npm test --prefix server"
   },
+  "packageManager": "npm@10.9.2",
   "engines": {
     "node": ">=20"
   },
