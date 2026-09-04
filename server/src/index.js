@@ -2,6 +2,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import mongoose from "mongoose";
+import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { Pattern } from "./models/Pattern.js";
@@ -46,6 +47,14 @@ app.use("/api/patterns", async (req, res, next) => {
 
 app.use("/api/patterns", patternsRouter);
 
+const clientDist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../client/dist");
+if (existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get(/^(?!\/api).*/, (_req, res) => {
+    res.sendFile(path.join(clientDist, "index.html"));
+  });
+}
+
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: "Onverwachte serverfout" });
@@ -63,8 +72,8 @@ async function start() {
     console.warn("De editor werkt, opslaan in de cloud pas na het starten van Mongo.");
   }
 
-  app.listen(PORT, () => {
-    console.log(`print relief to stl API op http://localhost:${PORT}`);
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`print relief to stl op http://0.0.0.0:${PORT}`);
   });
 }
 

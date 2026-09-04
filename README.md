@@ -42,7 +42,23 @@ Zonder Docker werkt de editor gewoon; de pill rechtsboven blijft dan **Lokaal** 
 | `npm run dev` | Start API en editor tegelijk |
 | `npm run dev:server` | Alleen Express (`node --watch`) |
 | `npm run dev:client` | Alleen Vite |
-| `npm test --prefix server` | Controleert of gegenereerde STL’s geldig en waterdicht zijn |
+| `npm run build` | Bouwt de Vue-editor naar `client/dist` |
+| `npm start` | Productie: API + gebouwde editor op `PORT` |
+| `npm test` | Controleert of gegenereerde STL’s geldig en waterdicht zijn |
+
+## Deploy (Railway / Railpack)
+
+Railway vindt geen startcommando als alleen `dev` in de root-`package.json` staat. Daarom staan `build` en `start` in de root, en herhaalt `railpack.json` het startcommando.
+
+Het image installeert server- en client-dependencies, bouwt de editor, en start `node server/src/index.js`. Express serveert `client/dist` en luistert op `0.0.0.0:$PORT`.
+
+Zet in Railway minstens:
+
+```
+MONGODB_URI=mongodb+srv://…
+```
+
+Zonder Mongo blijft de editor werken; patronen blijven dan in de browser.
 
 ## Editor gebruiken
 
