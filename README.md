@@ -30,7 +30,7 @@ npm run dev
 | API | http://localhost:3001 |
 | Health | http://localhost:3001/api/health |
 
-`docker compose up -d` start alleen MongoDB 7 op poort `27017`. De editor en API draaien lokaal via Vite en Express. Vite proxyt `/api` naar poort 3001.
+`docker compose up -d` start alleen MongoDB 7 op poort `27017`. De editor en API draaien lokaal via Vite en Express. Vite proxyt `/api` naar poort 3001. `npm run dev` houdt de API op 3001, ook als `.env` een andere `PORT` heeft (zoals 8080 op Railway).
 
 Zonder Docker werkt de editor gewoon; de pill rechtsboven blijft dan **Lokaal** en opslaan valt terug op de browser.
 

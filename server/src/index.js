@@ -12,7 +12,8 @@ import { defaultParams } from "./wave.js";
 
 dotenv.config({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../.env") });
 
-const PORT = Number(process.env.PORT || 3001);
+const isDev = process.env.npm_lifecycle_event === "dev";
+const PORT = Number(isDev ? process.env.DEV_PORT || 3001 : process.env.PORT || 3001);
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/hoogte";
 
 const app = express();
